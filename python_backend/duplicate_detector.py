@@ -2,7 +2,6 @@ from collections import defaultdict
 
 from hasher import calculate_sha256
 
-
 def find_duplicates(files):
     # Group files by size first.
     size_groups = defaultdict(list)
