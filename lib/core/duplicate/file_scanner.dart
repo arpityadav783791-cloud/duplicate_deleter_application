@@ -18,8 +18,9 @@ class FileScanner {
     void Function(int count)? onFile,
   }) async {
     final dir = Directory(folderPath);
-    if (!await dir.exists())
+    if (!await dir.exists()) {
       throw Exception('Folder not accessible: $folderPath');
+    }
     final files = <DuplicateFile>[];
     await for (final entity in dir.list(recursive: true, followLinks: false)) {
       if (entity is! File) continue;
