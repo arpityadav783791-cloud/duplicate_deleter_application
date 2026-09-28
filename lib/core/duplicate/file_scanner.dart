@@ -11,30 +11,22 @@ class FileScanner {
     '__pycache__',
     '.venv',
     'venv',
+    '.gradle',
   };
-
-  Future<List<DuplicateFile>> scan(String folderPath) async {
-    final directory = Directory(folderPath);
-
-    if (!await directory.exists()) {
-      throw Exception('Folder not found: $folderPath');
-    }
-
+  Future<List<DuplicateFile>> scan(
+    String folderPath, {
+    void Function(int count)? onFile,
+  }) async {
+    final dir = Directory(folderPath);
+    if (!await dir.exists())
+      throw Exception('Folder not accessible: $folderPath');
     final files = <DuplicateFile>[];
-
-    await for (final entity
-        in directory.list(recursive: true, followLinks: false)) {
+    await for (final entity in dir.list(recursive: true, followLinks: false)) {
       if (entity is! File) continue;
-
       try {
         final parts = entity.path.split(Platform.pathSeparator);
-
-        if (parts.any(excludedDirectories.contains)) {
-          continue;
-        }
-
+        if (parts.any(excludedDirectories.contains)) continue;
         final stat = await entity.stat();
-
         files.add(
           DuplicateFile(
             path: entity.path,
@@ -44,20 +36,17 @@ class FileScanner {
             modified: stat.modified,
           ),
         );
+        onFile?.call(files.length);
       } on FileSystemException {
-        continue;
+        // skip the file that cannot be accessed.
       }
     }
-
     return files;
   }
 
   String _extension(String path) {
     final name = path.split(Platform.pathSeparator).last;
-    final index = name.lastIndexOf('.');
-
-    if (index <= 0) return '';
-
-    return name.substring(index).toLowerCase();
+    final i = name.lastIndexOf('.');
+    return i <= 0 ? '' : name.substring(i).toLowerCase();
   }
 }
