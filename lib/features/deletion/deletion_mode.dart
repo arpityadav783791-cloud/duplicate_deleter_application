@@ -1,0 +1,1 @@
+enum DeletionMode { category, global }

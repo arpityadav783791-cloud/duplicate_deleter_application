@@ -1,24 +1,106 @@
 import 'package:flutter/material.dart';
 
 import '../../core/mock/mock_data.dart';
+import '../../core/models/duplicate_group.dart';
 import '../home/home_screen.dart';
+import '../results/category_results_screen.dart';
+import 'deletion_mode.dart';
 
 class DeletionCompleteScreen extends StatelessWidget {
   final int deletedCount;
   final int recoveredBytes;
   final int failedCount;
 
+  final DeletionMode deletionMode;
+  final List<DuplicateGroup>? sourceGroups;
+  final int? scannedFiles;
+  final Set<String> successfullyDeletedPaths;
+
   const DeletionCompleteScreen({
     super.key,
     required this.deletedCount,
     required this.recoveredBytes,
     required this.failedCount,
+    required this.deletionMode,
+    this.sourceGroups,
+    this.scannedFiles,
+    this.successfullyDeletedPaths = const {},
   });
+
+  List<DuplicateGroup> _remainingGroups() {
+    if (sourceGroups == null) {
+      return [];
+    }
+
+    final remainingGroups = <DuplicateGroup>[];
+
+    for (final group in sourceGroups!) {
+      final remainingFiles = group.files
+          .where((file) => !successfullyDeletedPaths.contains(file.path))
+          .toList();
+
+      if (remainingFiles.length >= 2) {
+        remainingGroups.add(
+          DuplicateGroup(
+            hash: group.hash,
+            size: group.size,
+            files: remainingFiles,
+          ),
+        );
+      }
+    }
+
+    return remainingGroups;
+  }
+
+  void _finish(BuildContext context) {
+    if (deletionMode == DeletionMode.global) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        (route) => false,
+      );
+
+      return;
+    }
+
+    final remainingGroups = _remainingGroups();
+
+    // No duplicate groups remain anywhere.
+    if (remainingGroups.isEmpty) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        (route) => false,
+      );
+
+      return;
+    }
+
+    // Other duplicate categories/groups still remain.
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CategoryResultsScreen(
+          duplicateGroups: remainingGroups,
+          scannedFiles: scannedFiles ?? 0,
+        ),
+      ),
+      (route) => route.isFirst,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final partial = failedCount > 0;
+
+    final remainingGroups = deletionMode == DeletionMode.category
+        ? _remainingGroups()
+        : <DuplicateGroup>[];
+
+    final goesHome =
+        deletionMode == DeletionMode.global || remainingGroups.isEmpty;
 
     final Color statusColor = partial
         ? Colors.orange.shade700
@@ -54,9 +136,7 @@ class DeletionCompleteScreen extends StatelessWidget {
                 const SizedBox(height: 28),
 
                 Text(
-                  partial
-                      ? 'Deletion completed'
-                      : 'Files deleted successfully',
+                  partial ? 'Deletion completed' : 'Files deleted successfully',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 27,
@@ -88,9 +168,7 @@ class DeletionCompleteScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(22),
-                    border: Border.all(
-                      color: Colors.black.withAlpha(12),
-                    ),
+                    border: Border.all(color: Colors.black.withAlpha(12)),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withAlpha(8),
@@ -110,10 +188,7 @@ class DeletionCompleteScreen extends StatelessWidget {
 
                       const SizedBox(height: 18),
 
-                      Divider(
-                        height: 1,
-                        color: Colors.black.withAlpha(10),
-                      ),
+                      Divider(height: 1, color: Colors.black.withAlpha(10)),
 
                       const SizedBox(height: 18),
 
@@ -127,10 +202,7 @@ class DeletionCompleteScreen extends StatelessWidget {
                       if (partial) ...[
                         const SizedBox(height: 18),
 
-                        Divider(
-                          height: 1,
-                          color: Colors.black.withAlpha(10),
-                        ),
+                        Divider(height: 1, color: Colors.black.withAlpha(10)),
 
                         const SizedBox(height: 18),
 
@@ -155,9 +227,7 @@ class DeletionCompleteScreen extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: Colors.orange.withAlpha(12),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: Colors.orange.withAlpha(35),
-                      ),
+                      border: Border.all(color: Colors.orange.withAlpha(35)),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -193,21 +263,14 @@ class DeletionCompleteScreen extends StatelessWidget {
                   width: double.infinity,
                   height: 54,
                   child: FilledButton.icon(
-                    onPressed: () {
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const HomeScreen(),
-                        ),
-                        (_) => false,
-                      );
-                    },
-                    icon: const Icon(
-                      Icons.home_rounded,
-                      size: 20,
+                    onPressed: () => _finish(context),
+                    icon: Icon(
+                      goesHome
+                          ? Icons.home_rounded
+                          : Icons.cleaning_services_rounded,
                     ),
-                    label: const Text(
-                      'Back to Home',
+                    label: Text(
+                      goesHome ? 'Back to Home' : 'Continue Cleaning',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
@@ -264,11 +327,7 @@ class _ResultRow extends StatelessWidget {
             color: color.withAlpha(18),
             borderRadius: BorderRadius.circular(13),
           ),
-          child: Icon(
-            icon,
-            size: 21,
-            color: color,
-          ),
+          child: Icon(icon, size: 21, color: color),
         ),
         const SizedBox(width: 13),
         Expanded(
@@ -283,10 +342,7 @@ class _ResultRow extends StatelessWidget {
         ),
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
-          ),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
         ),
       ],
     );

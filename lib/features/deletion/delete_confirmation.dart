@@ -1,22 +1,26 @@
+import 'package:duplicate_deleter_application/core/models/duplicate_group.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/mock/mock_data.dart';
 import '../../core/models/duplicate_file.dart';
+import 'deletion_mode.dart';
 import 'deletion_progress_screen.dart';
 
 class DeleteConfirmationScreen extends StatelessWidget {
   final List<DuplicateFile> selectedFiles;
+  final DeletionMode deletionMode;
+  final List<DuplicateGroup>? sourceGroups;
+  final int? scannedFiles;
 
   const DeleteConfirmationScreen({
     super.key,
     required this.selectedFiles,
+    required this.deletionMode,
+    this.sourceGroups,
+    this.scannedFiles,
   });
-
   int get totalBytes {
-    return selectedFiles.fold(
-      0,
-      (sum, file) => sum + file.size,
-    );
+    return selectedFiles.fold(0, (sum, file) => sum + file.size);
   }
 
   @override
@@ -100,9 +104,7 @@ class DeleteConfirmationScreen extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Colors.black.withAlpha(13),
-                          ),
+                          border: Border.all(color: Colors.black.withAlpha(13)),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withAlpha(8),
@@ -193,62 +195,63 @@ class DeleteConfirmationScreen extends StatelessWidget {
 
                         const SizedBox(height: 10),
 
-                        ...selectedFiles.take(3).map(
-                          (file) => Container(
-                            margin: const EdgeInsets.only(bottom: 8),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 12,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: Colors.black.withAlpha(11),
+                        ...selectedFiles
+                            .take(3)
+                            .map(
+                              (file) => Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: Colors.black.withAlpha(11),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 38,
+                                      height: 38,
+                                      decoration: BoxDecoration(
+                                        color: theme.colorScheme.primary
+                                            .withAlpha(18),
+                                        borderRadius: BorderRadius.circular(11),
+                                      ),
+                                      child: Icon(
+                                        Icons.insert_drive_file_rounded,
+                                        size: 20,
+                                        color: theme.colorScheme.primary,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 11),
+                                    Expanded(
+                                      child: Text(
+                                        file.name,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      MockData.formatBytes(file.size),
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.black.withAlpha(115),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 38,
-                                  height: 38,
-                                  decoration: BoxDecoration(
-                                    color: theme.colorScheme.primary
-                                        .withAlpha(18),
-                                    borderRadius:
-                                        BorderRadius.circular(11),
-                                  ),
-                                  child: Icon(
-                                    Icons.insert_drive_file_rounded,
-                                    size: 20,
-                                    color: theme.colorScheme.primary,
-                                  ),
-                                ),
-                                const SizedBox(width: 11),
-                                Expanded(
-                                  child: Text(
-                                    file.name,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  MockData.formatBytes(file.size),
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.black.withAlpha(115),
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
 
                         if (selectedFiles.length > 3)
                           Padding(
@@ -280,9 +283,7 @@ class DeleteConfirmationScreen extends StatelessWidget {
                         onPressed: () => Navigator.pop(context),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.black87,
-                          side: BorderSide(
-                            color: Colors.black.withAlpha(25),
-                          ),
+                          side: BorderSide(color: Colors.black.withAlpha(25)),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -309,17 +310,16 @@ class DeleteConfirmationScreen extends StatelessWidget {
                                 Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) =>
-                                        DeletionProgressScreen(
+                                    builder: (_) => DeletionProgressScreen(
                                       selectedFiles: selectedFiles,
+                                      deletionMode: deletionMode,
+                                      sourceGroups: sourceGroups,
+                                      scannedFiles: scannedFiles,
                                     ),
                                   ),
                                 );
                               },
-                        icon: const Icon(
-                          Icons.delete_rounded,
-                          size: 20,
-                        ),
+                        icon: const Icon(Icons.delete_rounded, size: 20),
                         label: const Text(
                           'Delete Files',
                           style: TextStyle(
@@ -330,10 +330,8 @@ class DeleteConfirmationScreen extends StatelessWidget {
                         style: FilledButton.styleFrom(
                           backgroundColor: theme.colorScheme.error,
                           foregroundColor: Colors.white,
-                          disabledBackgroundColor:
-                              Colors.black.withAlpha(18),
-                          disabledForegroundColor:
-                              Colors.black.withAlpha(70),
+                          disabledBackgroundColor: Colors.black.withAlpha(18),
+                          disabledForegroundColor: Colors.black.withAlpha(70),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -375,21 +373,14 @@ class _SummaryItem extends StatelessWidget {
             color: color.withAlpha(18),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(
-            icon,
-            color: color,
-            size: 21,
-          ),
+          child: Icon(icon, color: color, size: 21),
         ),
         const SizedBox(height: 8),
         Text(
           value,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
-          ),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 2),
         Text(

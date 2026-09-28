@@ -4,18 +4,23 @@ import '../../core/mock/mock_data.dart';
 import '../../core/models/duplicate_file.dart';
 import '../../core/models/duplicate_group.dart';
 import '../deletion/delete_confirmation.dart';
+import '../deletion/deletion_mode.dart';
 import '../preview/file_preview_screen.dart';
 import 'category_results_screen.dart';
 
 class CategoryFilesScreen extends StatefulWidget {
   final String categoryName;
   final List<DuplicateGroup> groups;
+  final List<DuplicateGroup>? allDuplicateGroups;
+  final int? scannedFiles;
   final KeepOneController? keepOneController;
 
   const CategoryFilesScreen({
     super.key,
     required this.categoryName,
     required this.groups,
+    this.allDuplicateGroups,
+    this.scannedFiles,
     this.keepOneController,
   });
 
@@ -303,6 +308,9 @@ class _CategoryFilesScreenState extends State<CategoryFilesScreen> {
           selectedFiles: _allFiles
               .where((file) => _selected.contains(file.path))
               .toList(),
+          deletionMode: DeletionMode.category,
+          sourceGroups: widget.allDuplicateGroups ?? widget.groups,
+          scannedFiles: widget.scannedFiles ?? 0,
         ),
       ),
     );

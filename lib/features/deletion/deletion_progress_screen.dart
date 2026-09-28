@@ -1,13 +1,24 @@
+import 'package:duplicate_deleter_application/core/models/duplicate_group.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/models/duplicate_file.dart';
 import '../../core/services/file_delete_service.dart';
 import 'deletion_complete_screen.dart';
+import 'deletion_mode.dart';
 
 class DeletionProgressScreen extends StatefulWidget {
   final List<DuplicateFile> selectedFiles;
+  final DeletionMode deletionMode;
+  final List<DuplicateGroup>? sourceGroups;
+  final int? scannedFiles;
 
-  const DeletionProgressScreen({super.key, required this.selectedFiles});
+  const DeletionProgressScreen({
+    super.key,
+    required this.selectedFiles,
+    required this.deletionMode,
+    this.sourceGroups,
+    this.scannedFiles,
+  });
 
   @override
   State<DeletionProgressScreen> createState() => _DeletionProgressScreenState();
@@ -66,6 +77,13 @@ class _DeletionProgressScreenState extends State<DeletionProgressScreen> {
             (sum, r) => sum + (r.success ? r.bytes : 0),
           ),
           failedCount: results.where((r) => !r.success).length,
+          deletionMode: widget.deletionMode,
+          sourceGroups: widget.sourceGroups,
+          scannedFiles: widget.scannedFiles,
+          successfullyDeletedPaths: results
+              .where((r) => r.success)
+              .map((r) => r.path)
+              .toSet(),
         ),
       ),
     );
