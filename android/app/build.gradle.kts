@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.example.duplicate_deleter_application"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
