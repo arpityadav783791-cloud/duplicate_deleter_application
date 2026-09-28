@@ -38,7 +38,15 @@ class _FolderSelectionScreenState extends State<FolderSelectionScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Choose folder')),
+    appBar: AppBar(
+      
+      title: const Text(
+        'Choose folder',
+        style: TextStyle(
+          fontWeight: FontWeight.w600,
+        ),
+      )
+    ),
     body: SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -75,6 +83,7 @@ class _FolderSelectionScreenState extends State<FolderSelectionScreen> {
             const Spacer(),
             SizedBox(
               width: double.infinity,
+              height: 50,
               child: FilledButton.icon(
                 onPressed: _opening ? null : _chooseFolder,
                 icon: _opening
